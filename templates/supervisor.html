@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="header">
+        <h1>🔍 Supervisor Dashboard</h1>
+        <p>Welcome, <strong>{{ current_user.username }}</strong>. Reviewing reports for today.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="alert-container" style="margin-top: 20px; margin-bottom: 20px;">
+        {% for category, message in messages %}
+            {% if '⚠️' in message or '🚨' in message or '❌' in message or category == 'warning' %}
+            <div class="alert alert-danger" role="alert" style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                {{ message }}
+            </div>
+            {% else %}
+            <div class="alert alert-success" role="alert" style="background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 15px; border-radius: 4px; margin-bottom: 10px;">
+                {{ message }}
+            </div>
+            {% endif %}
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="grid-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
+        
+        <div class="card" onclick="toggleEfficiencyGraph()" style="border-top: 4px solid #2563eb; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            <h3 style="margin: 0 0 10px 0; color: #475569; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Fuel Efficiency</h3>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 26px; font-weight: bold; color: #2563eb;">{{ sfc_metric }}</span>
+                <span style="font-size: 13px; color: #64748b; font-weight: 600;">Gal/kWh</span>
+            </div>
+            <p style="margin: 6px 0 0 0; font-size: 11px; color: #94a3b8;">Click to compare total loading production matrix.</p>
+        </div>
+
+        <div class="card" onclick="toggleFaultsWorkspace()" style="border-top: 4px solid #dc2626; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            <h3 style="margin: 0 0 10px 0; color: #475569; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Active Faults</h3>
+            <p style="font-size: 26px; font-weight: bold; color: #dc2626; margin: 0;">{{ active_faults_count }}</p>
+            <p style="margin: 6px 0 0 0; font-size: 11px; color: #94a3b8;">Click to review and make updates to active faults.</p>
+        </div>
+
+        <div class="card" style="border-top: 4px solid {% if system_health == 'Optimal' %}#059669{% elif system_health == 'Warning' %}#f59e0b{% else %}#dc2626{% endif %};">
+            <h3 style="margin: 0 0 10px 0; color: #475569; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">System Health</h3>
+            <p style="font-size: 26px; font-weight: bold; color: {% if system_health == 'Optimal' %}#059669{% elif system_health == 'Warning' %}#f59e0b{% else %}#dc2626{% endif %}; margin: 0;">{{ system_health }}</p>
+        </div>
+    </div>
+
+    <div id="efficiencyOverlay" style="display: none; background: #f8fafc; padding: 25px; border-radius: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #0f172a; margin: 0; font-size: 16px;">📊 Macro Total Production vs Fuel Comparison Metrics (Rolling 7 Days)</h3>
+            <button onclick="toggleEfficiencyGraph()" style="background: #e2e8f0; border: none; padding: 5px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; color: #475569;">Close ×</button>
+        </div>
+        <div style="display: flex; gap: 20px; align-items: center; justify-content: space-around; flex-wrap: wrap;">
+            <div style="text-align: center; padding: 20px; background: white; border-radius: 8px; flex: 1; min-width: 150px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Load Generated</div>
+                <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 5px;">{{ total_kwh }} <span style="font-size: 13px; color: #64748b;">kWh</span></div>
+            </div>
+            <div style="flex: 2; min-width: 280px; padding: 0 15px;">
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: #475569; margin-bottom: 4px;"><span>⚡ Total Energy Produced (kWh)</span><span>Target Span</span></div>
+                    <div style="width: 100%; background: #e2e8f0; height: 14px; border-radius: 4px; overflow: hidden;"><div style="width: 100%; background: #2563eb; height: 100%;"></div></div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: #475569; margin-bottom: 4px;"><span>06:00 - 06:00 Total Consumption Volumetric (Gal)</span><span style="color: #2563eb;">{{ total_gallons }} Gal</span></div>
+                    <div style="width: 100%; background: #e2e8f0; height: 14px; border-radius: 4px; overflow: hidden;">
+                        {% if total_kwh > 0 and total_gallons > 0 %}
+                            {% set bar_percentage = [(total_gallons / total_kwh * 100), 100] | min %}
+                            <div style="width: {{ bar_percentage }}%; background: {% if sfc_metric > 0.38 %}#dc2626{% else %}#f59e0b{% endif %}; height: 100%;"></div>
+                        {% else %}
+                            <div style="width: 0%; background: #f59e0b; height: 100%;"></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: white; border-radius: 8px; flex: 1; min-width: 150px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">SFC Efficiency Profile</div>
+                <div style="font-size: 14px; font-weight: bold; margin-top: 8px; color: {% if sfc_metric == 0 %}#64748b{% elif sfc_metric <= 0.35 %}#059669{% else %}#dc2626{% endif %};">
+                    {% if sfc_metric == 0 %}No Operations Data{% elif sfc_metric <= 0.35 %}✅ HIGH EFFICIENCY{% else %}⚠️ CRITICAL FUEL LOSS{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <div id="faultsWorkspaceOverlay" style="display: none; background: #fff5f5; padding: 25px; border-radius: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #fee2e2; margin-bottom: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #991b1b; margin: 0; font-size: 16px;">🔧 Real-time Generator Anomaly Resolver Matrix</h3>
+            <button onclick="toggleFaultsWorkspace()" style="background: #fee2e2; border: none; padding: 5px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; color: #991b1b;">Close ×</button>
+        </div>
+        
+        <div style="overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #fee2e2; padding: 15px;">
+            {% if active_maintenance_alerts %}
+                <table style="width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed;">
+                    <thead>
+                        <tr style="background-color: #fef2f2; border-bottom: 2px solid #fee2e2; font-size: 13px;">
+                            <th style="padding: 10px; color: #991b1b; width: 15%;">Date / Shift</th>
+                            <th style="padding: 10px; color: #991b1b; width: 35%;">Calculated System Alert Message</th>
+                            <th style="padding: 10px; color: #991b1b; width: 13%;">New Run Hours</th>
+                            <th style="padding: 10px; color: #991b1b; width: 13%;">New kWh Counter</th>
+                            <th style="padding: 10px; color: #991b1b; width: 14%;">True Fuel (Gal)</th>
+                            <th style="padding: 10px; color: #991b1b; width: 10%; text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in active_maintenance_alerts %}
+                        <tr style="border-bottom: 1px solid #fee2e2;">
+                            <form method="POST" action="/supervisor/update_logs">
+                                <input type="hidden" name="redirect_date" value="{{ start_date or '' }}">
+                                <input type="hidden" name="day_report_id" value="{{ alert.report_id if alert.shift_type == 'day' else '' }}">
+                                <input type="hidden" name="night_report_id" value="{{ alert.report_id if alert.shift_type == 'night' else '' }}">
+                                
+                                <td style="padding: 15px 10px; font-size: 13px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis;">
+                                    <div style="font-weight: bold; color: #1e293b;">{{ alert.date or 'System Log' }}</div>
+                                    {% if alert.shift_type == 'day' %}
+                                        <span style="font-size: 11px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block; margin-top: 4px;">☀️ Day</span>
+                                    {% else %}
+                                        <span style="font-size: 11px; background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block; margin-top: 4px;">🌙 Night</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td style="padding: 15px 10px; font-size: 13px; color: #1e293b; font-weight: 500; line-height: 1.4; vertical-align: middle;">
+                                    {{ alert.message }}
+                                </td>
+                                
+                                <td style="padding: 15px 10px; vertical-align: middle;">
+                                    <input type="number" step="0.1" name="{{ alert.shift_type }}_hours_{{ alert.genset_id }}" placeholder="Hours"
+                                           style="width: 90%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;">
+                                </td>
+                                
+                                <td style="padding: 15px 10px; vertical-align: middle;">
+                                    <input type="number" step="1" name="{{ alert.shift_type }}_kw_{{ alert.genset_id }}" placeholder="Total kWh"
+                                           style="width: 90%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;">
+                                </td>
+
+                                <td style="padding: 15px 10px; vertical-align: middle;">
+                                    <input type="number" step="0.1" name="{{ alert.shift_type }}_fuel_total_{{ alert.genset_id }}" placeholder="Total Gal"
+                                           style="width: 90%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; background-color: #fafafa;">
+                                </td>
+                                
+                                <td style="padding: 15px 10px; text-align: right; vertical-align: middle;">
+                                    <button type="submit" style="background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; width: 100%;">
+                                        Correct Entry
+                                    </button>
+                                </td>
+                            </form>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="text-align: center; padding: 20px; color: #059669; font-weight: bold;">
+                    ✅ No operational anomalies detected inside the system data logs! Everything is tracking optimally.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card" style="margin-bottom: 30px; background: #f8f9fa; border: 1px solid #e2e8f0;">
+        <h3 style="margin-top: 0; color: #1e3a8a; font-size: 16px; margin-bottom: 10px;">📅 Open & Review Operational Logs</h3>
+        <p style="color: #64748b; font-size: 13px; margin-bottom: 20px; margin-top: 0;">Select an operational date and shift. The system will look up the record and safely initialize your data entry form view layout.</p>
+        
+        <form method="GET" action="{{ url_for('supervisor_dashboard') }}" style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+            
+            <div style="display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px;">
+                <label style="font-weight: bold; font-size: 13px; color: #475569;">Operational Date:</label>
+                <input type="date" name="start_date" value="{{ start_date or '' }}" required style="width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-size: 14px;">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 220px;">
+                <label style="font-weight: bold; font-size: 13px; color: #475569;">Shift Assignment Window:</label>
+                <select name="active_tab" required style="width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-size: 14px; height: 38px;">
+                    <option value="" disabled {% if not active_tab %}selected{% endif %}>-- Choose Target Shift Interval --</option>
+                    <option value="day" {% if active_tab == 'day' %}selected{% endif %}>☀️ Day Shift (06:00 - 18:00)</option>
+                    <option value="night" {% if active_tab == 'night' %}selected{% endif %}>🌙 Night Shift (18:00 - 06:00)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; min-width: 150px;">
+                <button type="submit" style="background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; height: 38px;">
+                    🚀 Open Operator Form
+                </button>
+                {% if start_date or active_tab %}
+                    <a href="{{ url_for('supervisor_dashboard') }}" style="background: #64748b; color: white; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-size: 14px; font-weight: bold; display: inline-block; line-height: 18px; height: 18px;">
+                        Reset
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <div class="card" style="margin-bottom: 30px;">
+        <h2>📝 Recent Shift Reports</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Operator</th>
+                    <th>Fuel Consumption</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.timestamp.strftime('%Y-%m-%d') if report.timestamp else 'N/A' }}</td>
+                    <td>{{ report.submitted_by }}</td>
+                    <td>
+                        {% set total_gal = namespace(val=0.0) %}
+                        {% if report.fuel_logs %}
+                            {% for f_log in report.fuel_logs %}
+                                {% if f_log.gallons_consumed and f_log.gallons_consumed|string|trim != "" %}
+                                    {% set total_gal.val = total_gal.val + f_log.gallons_consumed|float %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        <strong>{{ (total_gal.val * 3.78541) | round(1) }}</strong> L
+                    </td>
+                    <td>
+                        <a href="{{ url_for('review_shift', report_id=report.id) }}" style="background: #2563eb; color: white; text-decoration: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-block;">✏️ Edit Report</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #64748b; padding: 15px;">No active reports found in database history.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section-card" style="border-top-color: #ef4444; padding: 20px; background: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px;">
+        <h2 class="section-title" style="margin-bottom: 5px;">🛠️ Maintenance Tasks Overview</h2>
+        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">Monitor ongoing corrective (CM) and preventive (PM) maintenance.</p>
+
+        <div id="tasks-list">
+            {% for task in maintenance_tasks %}
+            <div class="task-row" style="border-bottom: 1px solid #e2e8f0; padding: 15px 0; margin-bottom: 10px;">
+                <div style="display: grid; grid-template-columns: 1.5fr 1.5fr 3fr 1fr; gap: 15px; align-items: start; margin-bottom: 10px;">
+                    <div>
+                        <span style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Task Type</span>
+                        <strong style="color: #1e293b; font-size: 0.95rem;">{{ task.task_type or 'General' }}</strong>
+                    </div>
+                    <div>
+                        <span style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Asset / Location</span>
+                        <span style="color: #334155; font-size: 0.95rem; font-weight: 600;">{{ task.asset_id }}</span>
+                    </div>
+                    <div>
+                        <span style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Notes &amp; Materials Used</span>
+                        <span style="color: #475569; font-size: 0.95rem;">{{ task.notes or 'None recorded' }}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Progress</span>
+                        <strong style="color: #ef4444; font-size: 1rem;">{{ task.progress }}%</strong>
+                    </div>
+                </div>
+
+                {% if task.before_photo or task.after_photo %}
+                <div style="margin-top: 8px;">
+                    <button onclick="togglePhotoDrawer('drawer-{{ task.id }}')" 
+                            style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                        📷 View Verification Photos
+                    </button>
+                    
+                    <div id="drawer-{{ task.id }}" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; margin-top: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <span style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 6px;">📸 Before Photo</span>
+                                {% if task.before_photo %}
+                                <img src="{{ url_for('static', filename='uploads/' + task.before_photo) }}" alt="Before" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1;">
+                                {% else %}
+                                <p style="font-size: 0.85rem; color: #94a3b8; font-style: italic;">No photo uploaded</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 6px;">📸 After Photo</span>
+                                {% if task.after_photo %}
+                                <img src="{{ url_for('static', filename='uploads/' + task.after_photo) }}" alt="After" style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1;">
+                                {% else %}
+                                <p style="font-size: 0.85rem; color: #94a3b8; font-style: italic;">No photo uploaded</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+    function toggleEfficiencyGraph() {
+        var overlay = document.getElementById("efficiencyOverlay");
+        document.getElementById("faultsWorkspaceOverlay").style.display = "none";
+        if (overlay.style.display === "none") {
+            overlay.style.display = "block";
+        } else {
+            overlay.style.display = "none";
+        }
+    }
+
+    // Fixed toggle handler matching fuel efficiency box behavior exactly
+    function toggleFaultsWorkspace() {
+        var faultOverlay = document.getElementById("faultsWorkspaceOverlay");
+        document.getElementById("efficiencyOverlay").style.display = "none";
+        if (faultOverlay.style.display === "none") {
+            faultOverlay.style.display = "block";
+        } else {
+            faultOverlay.style.display = "none";
+        }
+    }
+
+    function togglePhotoDrawer(drawerId) {
+        var drawer = document.getElementById(drawerId);
+        if (drawer.style.display === "none" || drawer.style.display === "") {
+            drawer.style.display = "block";
+        } else {
+            drawer.style.display = "none";
+        }
+    }
+    </script>
+{% endblock %}

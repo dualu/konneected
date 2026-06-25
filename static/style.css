@@ -1,0 +1,195 @@
+/* ==========================================================================
+   🧱 GLOBAL ENTERPRISE CORE LAYOUT Styles
+   ========================================================================== */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 260px;
+    background: #0f172a;
+    color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* Prevents sidebar from shrinking/moving */
+}
+
+.sidebar-header {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #1e293b;
+    margin-bottom: 20px;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+}
+
+.nav-links li {
+    margin-bottom: 10px;
+}
+
+.nav-links li a {
+    color: #cbd5e1;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.nav-links li a:hover {
+    background: #1e293b;
+    color: white;
+}
+
+.logout-btn {
+    display: block;
+    background: #dc2626;
+    color: white;
+    text-align: center;
+    padding: 12px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+/* Main Content Area */
+.content-area {
+    flex-grow: 1;
+    padding: 40px;
+    background: #f1f5f9;
+    overflow-y: auto;
+}
+
+/* --- Admin Page Specific Styles --- */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* 🌟 UPDATED: Auto-stacks columns natively */
+    gap: 30px;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.card h2 {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #1e293b;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+
+/* Forms */
+.input-group { margin-bottom: 15px; }
+.input-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px; color: #64748b; }
+.input-group input, .input-group select {
+    width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;
+}
+
+.btn-primary {
+    background: #2563eb; color: white; border: none; padding: 10px 20px; 
+    border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;
+}
+
+/* Table Responsive Wrapper */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto; /* 🌟 Safeguard: Stops tables from breaking layouts on mobile glass */
+    -webkit-overflow-scrolling: touch;
+}
+
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; white-space: nowrap; }
+th { background: #f8fafc; color: #475569; }
+
+.role-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.role-super_admin { background: #fee2e2; color: #991b1b; }
+.role-supervisor { background: #fef3c7; color: #92400e; }
+.role-operator { background: #e0f2fe; color: #075985; }
+.action-link { cursor: pointer; margin-right: 10px; text-decoration: none; font-weight: 600; }
+
+
+/* ==========================================================================
+   📱 MOBILE & TABLET RESPONSIVE ENGINE (Screens under 768px wide)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* Convert sidebar & dashboard content area into a single vertical row stack */
+    .main-wrapper {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%; /* Spans full screen width on phones */
+        padding: 15px;
+        border-bottom: 4px solid #2563eb;
+    }
+    
+    .sidebar-header {
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+    }
+    
+    /* Horizontal scrollable nav links layout for convenient touch tapping on mobile devices */
+    .nav-links {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+    
+    .nav-links li {
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+    
+    .nav-links li a {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        background: #1e293b;
+    }
+    
+    .logout-btn {
+        margin-top: 10px;
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+    
+    /* Bring breathing padding down for tighter smartphone touch displays */
+    .content-area {
+        padding: 15px;
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    /* Force grid boxes to safely stretch 100% full viewport width */
+    .grid-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}

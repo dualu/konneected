@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Shift</title>
+    <style>
+        body { background-color: #f1f5f9; color: #334155; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .selection-card { max-width: 500px; width: 90%; text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #2563eb; }
+        .btn-day { padding: 20px 40px; background: #f59e0b; color: white; text-decoration: none; border-radius: 10px; font-size: 18px; font-weight: bold; margin: 15px; display: inline-block; box-shadow: 0 4px 6px rgba(245, 158, 11, 0.2); }
+        .btn-night { padding: 20px 40px; background: #0f172a; color: white; text-decoration: none; border-radius: 10px; font-size: 18px; font-weight: bold; margin: 15px; display: inline-block; box-shadow: 0 4px 6px rgba(15, 23, 42, 0.2); }
+        .footer-signature { margin-top: 50px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+        .footer-signature p { font-size: 11px; letter-spacing: 2px; font-weight: 700; color: #64748b; margin: 0; text-transform: uppercase; }
+        .footer-signature span { color: #2563eb; }
+    </style>
+</head>
+<body>
+
+<div class="selection-card">
+    <h1 style="color: #0f172a; margin-bottom: 10px;">Select Current Shift</h1>
+    <p style="color: #64748b; margin-bottom: 30px;">Please choose your active operational window to access the logging terminal.</p>
+    
+    <a href="{{ url_for('operator_dashboard', shift_type='Day') }}" class="btn-day">☀️ DAY SHIFT</a>
+    <a href="{{ url_for('operator_dashboard', shift_type='Night') }}" class="btn-night">🌙 NIGHT SHIFT</a>
+
+    <div class="footer-signature">
+        <p>Developed by <span>ABRAHAM DUALU SULONTEH</span></p>
+    </div>
+</div>
+
+</body>
+</html>

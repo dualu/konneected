@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operator Terminal - {{ settings.company_name }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f1f5f9; color: #334155; }
+        
+        /* TOP NAVIGATION */
+        .top-nav { background: #0f172a; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-bottom: 3px solid #2563eb; }
+        .nav-brand { display: flex; align-items: center; gap: 15px; font-size: 20px; font-weight: bold; }
+        .logo-circle { width: 40px; height: 40px; background: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .logout-btn { background: #dc2626; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; }
+        .logout-btn:hover { background: #b91c1c; }
+        .nav-links a { color: #cbd5e1; text-decoration: none; font-size: 14px; margin-right: 20px; }
+        .nav-links a:hover { color: #60a5fa; }
+
+        /* FORM CONTAINER */
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .form-header { margin-bottom: 25px; }
+        .form-header h1 { color: #0f172a; font-size: 28px; }
+        .form-header p { color: #64748b; }
+
+        /* CARD SECTIONS */
+        .section-card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #2563eb; }
+        .section-title { font-size: 18px; color: #1e293b; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+        
+        /* DATA GRIDS */
+        .grid-row { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-end; flex-wrap: wrap; }
+        .input-group { flex: 1; min-width: 120px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 5px; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #f8fafc; }
+        .input-group input:focus { border-color: #2563eb; outline: none; background: white; }
+        
+        /* READ ONLY LOCK */
+        .locked-input { background: #e2e8f0 !important; color: #64748b; font-weight: bold; border: 1px dashed #94a3b8 !important; cursor: not-allowed; }
+
+        /* BUTTONS */
+        .submit-btn { width: 100%; background: #16a34a; color: white; border: none; padding: 18px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.3); transition: 0.3s; margin-bottom: 50px; }
+        .submit-btn:hover { background: #15803d; }
+        
+        .add-row-btn { background: #e0f2fe; color: #0369a1; border: 1px dashed #0284c7; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; margin-top: 10px; }
+        .add-row-btn:hover { background: #bae6fd; }
+    </style>
+</head>
+<body>
+
+    <body>
+
+    <nav class="top-nav">
+        <div class="nav-brand" style="display: flex; align-items: center; gap: 12px;">
+            <img src="{{ url_for('static', filename='company_logo.png') }}" 
+                 alt="Logo" 
+                 style="width: 35px; height: 35px; object-fit: contain;">
+                 
+            <span>{{ settings.company_name }} - Operator Terminal</span>
+        </div>
+        <div class="nav-links">
+            <a href="/operator">Operator Terminal</a>
+            <a href="/supervisor">Supervisor Dashboard</a>
+            <a href="/admin">Admin Portal</a>
+        </div>
+        <div>
+            <span style="margin-right: 15px; color: #94a3b8; font-size: 13px;">Logged in: {{ current_user.username }}</span>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-messages-container" style="margin: 20px auto; max-width: 1160px; padding: 0 20px;">
+          {% for message in messages %}
+            <div class="alert-banner" style="background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a; padding: 12px; margin-bottom: 8px; border-radius: 4px; font-weight: bold;">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="container">
+            <div class="form-header">
+                <h1>Daily Shift Report</h1>
+                <p>Please complete all fields accurately. System will auto-calculate inventory balances.</p>
+            </div>
+
+                    <form method="POST" action="/submit_shift" enctype="multipart/form-data">
+
+            <div class="section-card" style="border-top-color: #475569;">
+                <h2 class="section-title">📅 Report Date & Shift Specification</h2>
+                <div class="grid-row">
+                    <div class="input-group" style="max-width: 320px; flex: initial;">
+                        <label for="report_date">Select Logging Shift Date</label>
+                        <input type="date" id="report_date" name="report_date" required>
+                    </div>
+                    
+                    <div class="input-group" style="max-width: 280px; flex: initial;">
+                        <label>Selected Operational Window</label>
+                        <input type="text" class="locked-input" readonly
+                            value="{% if shift_type | string == 'Night' %}🌙 Night Shift (18:00 - 06:00){% else %}☀️ Day Shift (06:00 - 18:00){% endif %}"
+                            style="text-align: center; color: #0f172a; font-weight: bold; background: #e2e8f0;">
+                        
+                        <input type="hidden" name="shift_type" value="{{ shift_type }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card" style="border-top-color: #0ea5e9;">
+                <h2 class="section-title">📦 1. Reefer Container Logistics</h2>
+                <div class="grid-row">
+                    <div class="input-group">
+                        <label>Start Count</label>
+                        <input type="number" id="startCount" name="reefer_start" required oninput="calculateReeferEnd()">
+                    </div>
+                    <div class="input-group">
+                        <label>Units Received (+)</label>
+                        <input type="number" id="received" name="reefer_received" required oninput="calculateReeferEnd()">
+                    </div>
+                    <div class="input-group">
+                        <label>Units Delivered (-)</label>
+                        <input type="number" id="delivered" name="reefer_delivered" required oninput="calculateReeferEnd()">
+                    </div>
+                    <div class="input-group">
+                        <label>Calculated End Count</label>
+                        <input type="number" id="endCount" name="reefer_end" class="locked-input" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card" style="border-top-color: #dc2626;">
+                <h2 class="section-title">⚠️ Faulty Reefer Units</h2>
+                <div id="faultyReeferContainer">
+                    <div class="grid-row" style="background: #fee2e2; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-bottom: 5px;">
+                        <div class="input-group">Unit ID</div>
+                        <div class="input-group">Setpoint</div>
+                        <div class="input-group">Supply</div>
+                        <div class="input-group">Return</div>
+                        <div class="input-group">Alarm</div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="input-group"><input type="text" name="fault_id_1"></div>
+                        <div class="input-group"><input type="text" name="fault_setpoint_1"></div>
+                        <div class="input-group"><input type="text" name="fault_supply_1"></div>
+                        <div class="input-group"><input type="text" name="fault_return_1"></div>
+                        <div class="input-group"><input type="text" name="fault_alarm_1"></div>
+                    </div>
+                </div>
+                <button type="button" class="add-row-btn" onclick="addFaultyReefer()">+ Add Another Faulty Unit</button>
+            </div>
+
+            <div class="section-card" style="border-top-color: #f59e0b;">
+                <h2 class="section-title">⚡ 2. Generator Telemetry</h2>
+                {% for gen in ['2', '4', '5', '7', '8', '9'] %}
+                
+                    {% set current_alert = alert_status_data.get(gen) or alert_status_data.get(gen|int) %}
+                    {% set current_hours = remaining_hours_data.get(gen) or remaining_hours_data.get(gen|int) or 'N/A' %}
+                    {% set current_service = next_service_data.get(gen) or next_service_data.get(gen|int) %}
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top: 15px;">
+                        <h4 style="margin: 0; color: #475569; font-weight: bold;">Unit AG-{{ gen }}</h4>
+                        
+                        {% if current_alert == 'critical' %}
+                            <span style="background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #f87171;">
+                                🚨 CRITICAL: {{ current_hours }} hrs left
+                            </span>
+                        {% elif current_alert == 'alert' %}
+                            <span style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #fbbf24;">
+                                ⚠️ ALERT: {{ current_hours }} hrs left
+                            </span>
+                        {% elif current_hours != 'N/A' %}
+                            <span style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #4ade80;">
+                                ✅ Normal: {{ current_hours }} hrs left
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="grid-row" style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                        <div class="input-group"><label>Volts</label><input type="number" step="0.1" name="ag{{ gen }}_volts"></div>
+                        <div class="input-group"><label>Amps</label><input type="number" step="0.1" name="ag{{ gen }}_amps"></div>
+                        <div class="input-group"><label>Load %</label><input type="number" step="1" name="ag{{ gen }}_load"></div>
+                        <div class="input-group"><label>kWhr</label><input type="number" step="0.1" name="ag{{ gen }}_kw"></div>
+                        <div class="input-group"><label>Battery</label><input type="number" step="0.1" name="ag{{ gen }}_batt"></div>
+                        <div class="input-group"><label>Temp °C</label><input type="number" step="0.1" name="ag{{ gen }}_temp"></div>
+                        <div class="input-group"><label>Run Hours</label><input type="number" step="0.1" name="ag{{ gen }}_hours"></div>
+                            
+                        <div class="input-group">
+                            <label>Next Service</label>
+                            {% if current_user.role == 'supervisor' or current_user.role == 'super_admin' %}
+                                <input type="number" 
+                                    step="0.1" 
+                                    name="ag{{ gen }}_next_service" 
+                                    value="{{ current_service if current_service else '' }}" 
+                                    placeholder="e.g. 250" 
+                                    style="background: #eff6ff; border: 1px solid #93c5fd; font-weight: bold; color: #1e40af; width: 100%;">
+                            {% else %}
+                                <input type="text" 
+                                    value="{{ current_service if current_service else 'Not Set' }} hrs (Locked)" 
+                                    class="locked-input" 
+                                    style="background: #f1f5f9; color: #475569; font-weight: bold; border: 1px solid #cbd5e1; width: 100%; text-align: center;" 
+                                    readonly 
+                                    tabindex="-1">
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="section-card" style="border-top-color: #059669;">
+                <h2 class="section-title">⛽ 4. Fuel Consumption Log (Per Generator)</h2>
+                <p style="margin-bottom: 15px; color: #64748b;">Enter the time and the fuel intake for each generator below.</p>
+                
+                <table id="fuelTable" style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                    <thead>
+                        <tr style="background: #1e293b; color: white;">
+                            <th style="padding: 12px; border: 1px solid #334155;">Time</th>
+                            {% for gen in ['AG-2', 'AG-4', 'AG-5', 'AG-7', 'AG-8', 'AG-9'] %}
+                            <th style="padding: 12px; border: 1px solid #334155;">{{ gen }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #cbd5e1;"><input type="time" name="fuel_time_1" style="width: 100%; padding: 5px;"></td>
+                            {% for gen in ['2', '4', '5', '7', '8', '9'] %}
+                            <td style="padding: 8px; border: 1px solid #cbd5e1;"><input type="number" name="fuel_ag{{ gen }}_1" style="width: 100%; padding: 5px;" placeholder="Gal"></td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <button type="button" class="add-row-btn" onclick="addFuelRow()">+ Add New Time Entry</button>
+            </div>
+
+            <div class="section-card" style="border-top-color: #ef4444;">
+                <h2 class="section-title">🛠️ 5. Maintenance & Active Tasks</h2>
+                <div id="taskContainer">
+                    <div class="grid-row" style="border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px;">
+                        <div class="input-group">
+                            <label>Task Type</label>
+                            <select name="task_type_1">
+                                <option value="none">-- No Actions Taken --</option>
+                                <option value="PM">Generator PM (Routine)</option>
+                                <option value="CM">Generator CM (Breakdown)</option>
+                                <option value="Electrical">Electrical Team Task</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Asset/Location</label><input type="text" name="task_asset_1" placeholder="e.g. AG-2"></div>
+                        <div class="input-group" style="flex: 2;"><label>Notes & Parts</label><input type="text" name="task_notes_1" placeholder="Replaced Oil Filter"></div>
+                        <div class="input-group"><label>Progress (%)</label><input type="number" name="task_progress_1" max="99" min="0" placeholder="0 - 99"></div>
+                        <div class="input-group"><label>Before Photo</label><input type="file" name="image_before_1" accept="image/*"></div>
+                        <div class="input-group"><label>After Photo</label><input type="file" name="image_after_1" accept="image/*"></div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">✅ Submit Shift Report to Database</button>
+        </form>
+    </div>
+
+    <script>
+        // Auto-initialize and constrain Date Picker
+        document.addEventListener("DOMContentLoaded", function() {
+            const dateInput = document.getElementById('report_date');
+            if (dateInput) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                let mm = today.getMonth() + 1; 
+                let dd = today.getDate();
+                
+                if (mm < 10) mm = '0' + mm;
+                if (dd < 10) dd = '0' + dd;
+                
+                const formattedToday = `${yyyy}-${mm}-${dd}`;
+                
+                dateInput.value = formattedToday;
+                dateInput.max = formattedToday;
+            }
+        });
+
+        function calculateReeferEnd() {
+            let start = parseInt(document.getElementById('startCount').value) || 0;
+            let received = parseInt(document.getElementById('received').value) || 0;
+            let delivered = parseInt(document.getElementById('delivered').value) || 0;
+            let endCount = (start + received) - delivered;
+            document.getElementById('endCount').value = endCount;
+        }
+
+        let faultCount = 1;
+        function addFaultyReefer() {
+            faultCount++;
+            const container = document.getElementById('faultyReeferContainer');
+            const div = document.createElement('div');
+            div.className = 'grid-row';
+            div.innerHTML = `
+                <div class="input-group"><input type="text" name="fault_id_${faultCount}"></div>
+                <div class="input-group"><input type="text" name="fault_setpoint_${faultCount}"></div>
+                <div class="input-group"><input type="text" name="fault_supply_${faultCount}"></div>
+                <div class="input-group"><input type="text" name="fault_return_${faultCount}"></div>
+                <div class="input-group"><input type="text" name="fault_alarm_${faultCount}"></div>
+            `;
+            container.appendChild(div);
+        }
+
+        let fuelRowCount = 1;
+        function addFuelRow() {
+            fuelRowCount++;
+            const table = document.getElementById('fuelTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            newRow.innerHTML = `
+                <td style="padding: 8px; border: 1px solid #cbd5e1;"><input type="time" name="fuel_time_${fuelRowCount}" style="width: 100%; padding: 5px;"></td>
+                ${['2', '4', '5', '7', '8', '9'].map(id => `<td style="padding: 8px; border: 1px solid #cbd5e1;"><input type="number" name="fuel_ag${id}_${fuelRowCount}" style="width: 100%; padding: 5px;" placeholder="Gal"></td>`).join('')}
+            `;
+        }
+    </script>
+</body>
+</html>

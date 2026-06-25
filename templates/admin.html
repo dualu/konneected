@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="header">
+        <h1>Command Center</h1>
+        <p>Logged in as: <strong>{{ current_user.username }}</strong></p>
+    </div>
+
+    <div class="grid-container">
+        <div class="card">
+            <h2>🏢 System Branding (White-Label)</h2>
+            <form method="POST" action="/update_branding" enctype="multipart/form-data">
+                <div class="input-group">
+                    <label>Company Name</label>
+                    <input type="text" name="company_name" value="{{ settings.company_name }}">
+                </div>
+                <div class="input-group">
+                    <label>Upload New Logo (.png, .jpg)</label>
+                    <input type="file" name="logo_file" accept="image/*">
+                </div>
+                <button type="submit" class="btn-primary">Save Branding Setup</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>👤 Create New User</h2>
+            <form method="POST" action="/add_user">
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" name="new_username" required>
+                </div>
+                <div class="input-group">
+                    <label>Temporary Password</label>
+                    <input type="text" name="new_password" required>
+                </div>
+                <div class="input-group">
+                    <label>Assign Security Role</label>
+                    <select name="new_role">
+                        <option value="operator">Operator (Shift Entry Only)</option>
+                        <option value="supervisor">Supervisor (Analytics & Edits)</option>
+                        <option value="super_admin">Super Admin (Full Control)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Provision Account</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 30px;">
+        <h2>👥 Active User Directory</h2>
+        
+        <!-- 📱 Mobile responsive wrapper to ensure table flows elegantly on compact screens -->
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Security Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.id }}</td>
+                        <td><strong>{{ u.username }}</strong></td>
+                        <td><span class="role-badge role-{{ u.role }}">{{ u.role|replace('_', ' ')|title }}</span></td>
+                        <td>
+                            <div style="display: flex; gap: 15px; align-items: center;">
+                                
+                                <!-- 🔑 RESET PASSWORD ACTION LINK -->
+                                <a href="/admin/reset_password/{{ u.id }}" 
+                                   class="action-link" 
+                                   style="color:#d97706; text-decoration: none;"
+                                   onclick="return confirm('Are you sure you want to reset the password for {{ u.username }}?');">
+                                    Reset Password
+                                </a>
+
+                                <!-- 🗑️ SECURE FORM-BASED DELETE ACTION BUTTON -->
+                                <form action="/admin/delete_user/{{ u.id }}" method="POST" style="margin: 0;"
+                                      onsubmit="return confirm('CRITICAL: Are you completely certain you want to permanently delete user account: {{ u.username }}?');">
+                                    <button type="submit" class="action-link" style="color:#dc2626; background: none; border: none; padding: 0; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;">
+                                        Delete
+                                    </button>
+                                </form>
+                                
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

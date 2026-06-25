@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="main-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header" style="display: flex; align-items: center; gap: 10px; padding: 15px;">
+                <img src="{{ url_for('static', filename='company_logo.png') }}" 
+                     alt="Logo" 
+                     style="width: 32px; height: 32px; object-fit: contain;">
+                <h3 style="margin: 0; font-size: 1.2rem; white-space: nowrap;">Konnected Liberia</h3>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="/admin">⚙️ System Admin</a></li>
+                <li><a href="/supervisor">🔍 Supervisor Logs</a></li>
+                <li><a href="/operator">📄 Operator Terminal</a></li>
+            </ul>
+            <div style="margin-top: auto;">
+                <a href="/logout" class="logout-btn">🚪 Logout</a>
+            </div>
+        </aside>
+        
+        <main class="content-area">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

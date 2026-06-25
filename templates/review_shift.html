@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block content %}
+    
+
+        <div class="card" style="margin-bottom: 30px; border-left: 4px solid #0284c7;">
+            <h2>🥶 Reefer & Cold Storage Monitoring</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">Verify total cargo velocity tracking alongside specific mechanical climate metrics for this shift:</p>
+            
+            <h3 style="color: #0369a1; font-size: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">📦 Shift Cargo Volume Inventory</h3>
+            <div style="overflow-x: auto; margin-bottom: 25px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                {% if reefer_inventory %}
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
+                    <div>
+                        <label style="font-size: 12px; color: #475569; font-weight: bold; display: block; margin-bottom: 4px;">Start Count</label>
+                        <input type="number" name="inv_start_count" value="{{ reefer_inventory.start_count }}" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #475569; font-weight: bold; display: block; margin-bottom: 4px;">Received (+)</label>
+                        <input type="number" name="inv_received" value="{{ reefer_inventory.received }}" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; color: #16a34a;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #475569; font-weight: bold; display: block; margin-bottom: 4px;">Delivered (-)</label>
+                        <input type="number" name="inv_delivered" value="{{ reefer_inventory.delivered }}" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; color: #dc2626;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #475569; font-weight: bold; display: block; margin-bottom: 4px;">Ending Balance</label>
+                        <input type="number" name="inv_end_count" value="{{ reefer_inventory.end_count }}" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; background: #f1f5f9;">
+                    </div>
+                </div>
+                {% else %}
+                <p style="color: #64748b; font-style: italic; margin: 0; font-size: 14px;">No volumetric cargo inventory checks logged to this shift.</p>
+                {% endif %}
+            </div>
+
+            <h3 style="color: #0369a1; font-size: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">🌡️ Machinery Temperature & Alarm Logs</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; min-width: 700px;">
+                    <thead>
+                        <tr style="background: #f0f9ff; border-bottom: 2px solid #bae6fd; text-align: left;">
+                            <th style="padding: 12px 10px;">Reefer Unit ID</th>
+                            <th style="padding: 12px 10px;">Setpoint (°C)</th>
+                            <th style="padding: 12px 10px;">Supply Temp (°C)</th>
+                            <th style="padding: 12px 10px;">Return Temp (°C)</th>
+                            <th style="padding: 12px 10px;">Active Alarm Code</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fault in reefer_faults %}
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 12px 10px; font-weight: bold; color: #0369a1;">{{ fault.reefer_id }}</td>
+                            <td style="padding: 6px 5px;">
+                                <input type="text" name="fault_setpoint_{{ fault.id }}" value="{{ fault.setpoint }}" style="width: 80px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                            </td>
+                            <td style="padding: 6px 5px;">
+                                <input type="text" name="fault_supply_{{ fault.id }}" value="{{ fault.supply_temp }}" style="width: 80px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                            </td>
+                            <td style="padding: 6px 5px;">
+                                <input type="text" name="fault_return_{{ fault.id }}" value="{{ fault.return_temp }}" style="width: 80px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                            </td>
+                            <td style="padding: 6px 5px;">
+                                <input type="text" name="fault_alarm_{{ fault.id }}" value="{{ fault.alarm_code }}" placeholder="e.g. None" style="width: 120px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; {% if fault.alarm_code and fault.alarm_code != 'None' and fault.alarm_code != '0' %}color: #dc2626; background: #fef2f2; border-color: #fca5a5;{% endif %}">
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="padding: 20px; color: #64748b; text-align: center; font-style: italic;">No mechanical reefer metrics or faults appended to this shift.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 30px; border-left: 4px solid #b45309;">
+            <h2>⛽ Fuel Logistics & Volumetric Logs</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">Review and make alterations to fuel drops, runtime consumption parameters, or storage tank fillings:</p>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+                    <thead>
+                        <tr style="background: #fffbeb; border-bottom: 2px solid #fde68a; text-align: left;">
+                            <th style="padding: 12px 10px;">Target Asset Name / Tank</th>
+                            <th style="padding: 12px 10px;">Gallons Consumed (Gal)</th>
+                            <th style="padding: 12px 10px;">Gallons Added / Refueled (Gal)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set active_fuel = fuel_logs if fuel_logs else report.fuel_logs %}
+                        {% for fuel in active_fuel %}
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 12px 10px; font-weight: bold; color: #9a3412;">{{ fuel.genset_id or 'Main Storage Tank' }}</td>
+                            <td style="padding: 6px 5px;">
+                                <input type="text" name="fuel_consumed_{{ fuel.id }}" value="{{ fuel.gallons_consumed }}" style="width: 120px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;"> Gal
+                            </td>
+                            <td style="padding: 6px 5px;">
+                                <input type="text" name="fuel_added_{{ fuel.id }}" value="{{ fuel.gallons_added }}" style="width: 120px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;"> Gal
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" style="padding: 20px; color: #64748b; text-align: center; font-style: italic;">No volumetric fuel logs appended to this shift.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 30px; overflow-x: auto;">
+            <h2>⚡ Generator Telemetry & "Next Service" Adjustments</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">Review and modify all recorded metrics for this shift log:</p>
+            
+            <table style="width: 100%; border-collapse: collapse; min-width: 950px;">
+                <thead>
+                    <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1; text-align: left;">
+                        <th style="padding: 12px 10px;">Unit ID</th>
+                        <th style="padding: 12px 10px;">Volts (V)</th>
+                        <th style="padding: 12px 10px;">Amps (A)</th>
+                        <th style="padding: 12px 10px;">Load (%)</th>
+                        <th style="padding: 12px 10px;">kW</th>
+                        <th style="padding: 12px 10px;">Batt (V)</th>
+                        <th style="padding: 12px 10px;">Temp (°C)</th>
+                        <th style="padding: 12px 10px;">Run Hours</th>
+                        <th style="padding: 12px 10px; color: #2563eb;">🛠️ Next Service</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in generator_logs %}
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px 10px; font-weight: bold; color: #1e3a8a;">{{ log.genset_id }}</td>
+                        <td style="padding: 6px 5px;"><input type="text" name="volts_{{ log.id }}" value="{{ log.volts }}" style="width: 75px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        <td style="padding: 6px 5px;"><input type="text" name="amps_{{ log.id }}" value="{{ log.amps }}" style="width: 75px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        <td style="padding: 6px 5px;"><input type="text" name="load_pct_{{ log.id }}" value="{{ log.load_pct }}" style="width: 65px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        <td style="padding: 6px 5px;"><input type="text" name="kw_{{ log.id }}" value="{{ log.kw }}" style="width: 75px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        <td style="padding: 6px 5px;"><input type="text" name="battery_v_{{ log.id }}" value="{{ log.battery_v }}" style="width: 65px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        <td style="padding: 6px 5px;"><input type="text" name="temp_c_{{ log.id }}" value="{{ log.temp_c }}" style="width: 65px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;"></td>
+                        <td style="padding: 6px 5px;"><input type="text" name="hours_{{ log.id }}" value="{{ log.run_hours }}" style="width: 85px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold;"></td>
+                        <td style="padding: 6px 5px;">
+                            <input type="text" name="next_service_{{ log.id }}" 
+                                   value="{{ log.next_service }}" 
+                                   placeholder="e.g. 250" 
+                                   style="width: 100px; padding: 6px; border: 1px solid #93c5fd; border-radius: 4px; background: #eff6ff; font-weight: bold; color: #1e40af;">
+                        </td>
+                    </tr>
+                    
+                    <tr style="border-bottom: 2px solid #cbd5e1; background: #f8fafc;">
+                        <td colspan="9" style="padding: 0px 10px 12px 10px;">
+                            <div class="metrics-display" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 6px; margin-top: 5px; display: flex; gap: 15px; align-items: center;">
+                                
+                                <div style="flex: 1;">
+                                    <span style="font-size: 11px; color: #166534; font-weight: bold; text-transform: uppercase;">Net Power Gen</span>
+                                    <div style="font-size: 16px; font-weight: bold; color: #15803d;">{{ log.delta_kwhr if log.delta_kwhr is not none else '0.0' }} kWhr</div>
+                                </div>
+                                
+                                <div style="flex: 1;">
+                                    <span style="font-size: 11px; color: #166534; font-weight: bold; text-transform: uppercase;">Total Fuel Used</span>
+                                    <div style="font-size: 16px; font-weight: bold; color: #15803d;">{{ log.fuel_liters if log.fuel_liters is not none else '0.0' }} L</div>
+                                </div>
+                                
+                                <div style="flex: 1;">
+                                    <span style="font-size: 11px; color: #166534; font-weight: bold; text-transform: uppercase;">Fuel Efficiency (SFC)</span>
+                                    <div style="font-size: 16px; font-weight: bold; {% if log.sfc and log.sfc > 0.45 %}color: #dc2626;{% else %}color: #15803d;{% endif %}">
+                                        {{ log.sfc if log.sfc is not none else '0.00' }} L/kWhr
+                                    </div>
+                                </div>
+
+                                <div style="flex: 1.5; border-left: 1px solid #cbd5e1; padding-left: 15px;">
+                                    <span style="font-size: 11px; color: #1e40af; font-weight: bold; text-transform: uppercase;">🛠️ Maintenance Engine</span>
+                                    <div style="font-size: 13px; margin-top: 2px; color: #334155;">
+                                        {% if log.next_service and log.run_hours %}
+                                            {% set remaining = log.next_service|float - log.run_hours|float %}
+                                            Target: <strong style="color: #1e40af;">{{ log.next_service }} hrs</strong> | 
+                                            Status: 
+                                            {% if remaining <= 0 %}
+                                                <span style="color: #dc2626; font-weight: bold;">🚨 OVERDUE ({{ remaining|abs|round(1) }} hrs)</span>
+                                            {% elif remaining <= 50 %}
+                                                <span style="color: #ea580c; font-weight: bold;">⚠️ Due soon ({{ remaining|round(1) }} hrs left)</span>
+                                            {% else %}
+                                                <span style="color: #16a34a; font-weight: bold;">✅ Healthy ({{ remaining|round(1) }} hrs left)</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span style="color: #64748b; font-style: italic;">Missing service limit parameters</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" style="padding: 20px; color: #dc2626; text-align: center;">No telemetry data records found for this shift.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display: flex; gap: 15px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <button type="submit" style="background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                💾 Save Changes & Verify
+            </button>
+            
+            {% if current_user.role == 'super_admin' %}
+                <a href="{{ url_for('admin_dashboard') }}" style="background: #64748b; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; display: inline-block;">Cancel</a>
+            {% else %}
+                <a href="{{ url_for('supervisor_dashboard') }}" style="background: #64748b; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; display: inline-block;">Cancel</a>
+            {% endif %}
+        </div>
+    </form>
+{% endblock %}

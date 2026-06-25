@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Update Required</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0f172a; margin: 0; padding: 20px; box-sizing: border-box;">
+
+    <div class="card" style="width: 100%; max-width: 420px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+        <h2 style="margin-top: 0; color: #0f172a; display: flex; align-items: center; gap: 10px;">🔒 Update Password</h2>
+        <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin-bottom: 25px;">
+            Your account is currently flagged with a temporary security credential. Please configure a unique password to secure your terminal data.
+        </p>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-bottom: 15px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/force_change_password">
+            <div class="input-group">
+                <label style="color: #475569;">New Secure Password</label>
+                <input type="password" name="password" style="background: white;" required>
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 25px;">
+                <label style="color: #475569;">Confirm New Password</label>
+                <input type="password" name="confirm_password" style="background: white;" required>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="padding: 12px;">Update & Log In</button>
+        </form>
+    </div>
+
+</body>
+</html>
