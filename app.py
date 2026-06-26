@@ -138,7 +138,7 @@ def logout():
 @app.route('/operator')
 @login_required
 def operator_portal():
-    if current_user.role != 'operator' and current_user.role != 'super_admin':
+    if current_user.role != 'operator' and current_user.role != 'super_admin''supervisor':
         flash("Unauthorized access role.")
         return redirect(url_for('login'))
     return render_template('shift_selection.html')
