@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -912,13 +913,21 @@ def review_shift(report_id):
 
 
 # ====================================================================
-# APPLICATION INITIALIZATION AND EXECUTION 
+# PRODUCTION INITIALIZATION (Runs globally on Render and Gunicorn)
+# ====================================================================
+# We move the table creation OUTSIDE of the __main__ block so that 
+# Gunicorn executes it when initializing your cloud instances.
+try:
+    with app.app_context():
+        db.create_all()
+        print("SUCCESS: Database tables initialized on remote cluster.", flush=True)
+except Exception as e:
+    print(f"DATABASE INITIALIZATION ERROR: {e}", flush=True)
+
+# ====================================================================
+# LOCAL DEVELOPMENT GUARD (Only runs on your local computer)
 # ====================================================================
 if __name__ == '__main__':
-    # 1. Open the application context and build tables first
-    with app.app_context():
-        db.create_all()  # This builds users/operator tables on Neon BEFORE server start
-        print("Database tables synchronized successfully!")
-
-    # 2. Start the local/production web server engine last
+    # This block is completely ignored by Gunicorn on Render.
+    # It only triggers when you run 'python app.py' on your machine.
     app.run(debug=True, port=5000)
