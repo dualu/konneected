@@ -21,11 +21,16 @@ from models import (
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'enterprise_super_secret_key_2024'
 # Fetch Neon database URL from environment variables, fallback to local if empty
-database_url = os.environ.get('DATABASE_URL', 'sqlite:///powerhouse_enterprise.db')
+database_url = os.environ.get('DATABASE_URL')
 
-# Ensure the prefix uses modern SQLAlchemy syntax ('postgresql://' vs 'postgres://')
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+if database_url:
+    # Ensure the prefix uses modern SQLAlchemy syntax ('postgresql://' vs 'postgres://')
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    print("DATABASE CONNECTION STATUS: Connecting to Neon cloud PostgreSQL database.", file=sys.stderr)
+else:
+    database_url = 'sqlite:///powerhouse_enterprise.db'
+    print("DATABASE CONNECTION STATUS: WARNING! 'DATABASE_URL' environment variable not found. Falling back to local SQLite.", file=sys.stderr)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -906,5 +911,14 @@ def review_shift(report_id):
     )
 
 
+# ====================================================================
+# APPLICATION INITIALIZATION AND EXECUTION 
+# ====================================================================
 if __name__ == '__main__':
+    # 1. Open the application context and build tables first
+    with app.app_context():
+        db.create_all()  # This builds users/operator tables on Neon BEFORE server start
+        print("Database tables synchronized successfully!")
+
+    # 2. Start the local/production web server engine last
     app.run(debug=True, port=5000)
