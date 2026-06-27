@@ -20,7 +20,14 @@ from models import (
 # 1. INITIALIZE APP & CONFIG
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'enterprise_super_secret_key_2024'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///powerhouse_enterprise.db'
+# Fetch Neon database URL from environment variables, fallback to local if empty
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///powerhouse_enterprise.db')
+
+# Ensure the prefix uses modern SQLAlchemy syntax ('postgresql://' vs 'postgres://')
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
