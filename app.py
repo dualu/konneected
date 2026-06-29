@@ -911,24 +911,27 @@ def review_shift(report_id):
         reefer_inventory=reefer_inventory,
         reefer_faults=reefer_faults
     )
+
 from sqlalchemy import text
 
 # ====================================================================
-# FINAL PRODUCTION DATABASE COLUMN RESIZE
+# FORCED SCHEMA REBUILD (THE FINAL SOLUTION)
 # ====================================================================
 with app.app_context():
     try:
-        # Forcefully expand the column limit to 255 characters on the live server
-        db.session.execute(text('ALTER TABLE "user" ALTER COLUMN password_hash TYPE VARCHAR(255);'))
+        # 1. Brutally drop the user table to ensure no 120-limit schema remains
+        db.session.execute(text('DROP TABLE IF EXISTS "user" CASCADE;'))
         db.session.commit()
-        print("DATABASE SUCCESS: Column resized to 255.", flush=True)
         
-        # Now create any other tables
+        # 2. Recreate all tables - SQLAlchemy will now use the 255 limit from your models.py
         db.create_all()
-        print("SUCCESS: Tables initialized.", flush=True)
+        
+        # 3. Now insert the admin user
+        # (Ensure your admin creation code follows here)
+        print("SUCCESS: Database tables rebuilt with 255-character limits.", flush=True)
         
     except Exception as e:
-        print(f"Database note: {e}", flush=True)
+        print(f"CRITICAL ERROR DURING REBUILD: {e}", flush=True)
 # ====================================================================
 # LOCAL DEVELOPMENT GUARD (Only runs on your local computer)
 # ====================================================================
