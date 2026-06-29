@@ -49,6 +49,29 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = "Please log in to access the Powerhouse Terminal."
 
+# 4. AUTO-BUILD DATABASE
+with app.app_context():
+    db.create_all()
+    # Ensure Admin and Settings exist
+    if not User.query.filter_by(username='admin').first():
+        master_admin = User(username='admin', password_hash=generate_password_hash('admin123'), role='super_admin')
+        db.session.add(master_admin)
+        db.session.commit()
+    
+    # 🌟 ADD THIS BLOCK HERE:
+    if not User.query.filter_by(username='your_supervisor_username').first():
+        new_supervisor = User(
+            username='your_supervisor_username', 
+            password_hash=generate_password_hash('your_password'), 
+            role='supervisor', 
+            must_change_password=False # 👈 This flag bypasses the force-change redirect
+        )
+        db.session.add(new_supervisor)
+        db.session.commit()
+
+    if not SystemSettings.query.first():
+        # ... rest of your existing settings code ...
+
 # 3. MODELS & USER LOADER
 from models import User, SystemSettings, ShiftReport, ReeferInventory, ReeferFault, GeneratorLog, FuelLog, TaskLog, MaintenanceTask
 
@@ -911,27 +934,11 @@ def review_shift(report_id):
         reefer_inventory=reefer_inventory,
         reefer_faults=reefer_faults
     )
-    def initialize_temp_superuser():
-    # Check if the user already exists to prevent duplicate entries
-    existing_user = User.query.filter_by(username='YOUR_CHOSEN_USERNAME').first()
-    
-    if not existing_user:
-        # Replace 'YOUR_CHOSEN_PASSWORD' with your desired password
-        new_admin = User(
-            username='lench',
-            password_hash=generate_password_hash('lench2026'),
-            role='super_admin',
-            must_change_password=False  # Bypasses the password-change requirement
-        )
-        db.session.add(new_admin)
-        db.session.commit()
-        print("Temporary supervisor account created successfully.", flush=True)
-    else:
-        print("Supervisor account already exists.", flush=True)
-    # Ensure there are 4 spaces before each line below 'with'
-with app.app_context():
-    db.create_all()
-    print("Database tables created successfully.", flush=True)
-    # Force port binding for Render (defaulting to 10000 if not specified)
-    port = int(os.environ.get("PORT", 10000))
+if __name__ == '__main__':
+    with app.app_context():
+        # Ensures your database tables are created on startup
+        db.create_all()
+
+    # Dynamic port logic for Render/Local
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
