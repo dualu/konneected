@@ -911,32 +911,24 @@ def review_shift(report_id):
         reefer_inventory=reefer_inventory,
         reefer_faults=reefer_faults
     )
-# ====================================================================
-# PRODUCTION DATABASE INITIALIZATION & UPGRADE
-# ====================================================================
 from sqlalchemy import text
 
 # ====================================================================
-# FOOLPROOF DATABASE RESET & INITIALIZATION
+# FINAL PRODUCTION DATABASE COLUMN RESIZE
 # ====================================================================
 with app.app_context():
     try:
-        print("STEP 1: Forcefully dropping the old, restricted user table...", flush=True)
-        db.session.execute(text('DROP TABLE IF EXISTS "user" CASCADE;'))
+        # Forcefully expand the column limit to 255 characters on the live server
+        db.session.execute(text('ALTER TABLE "user" ALTER COLUMN password_hash TYPE VARCHAR(255);'))
         db.session.commit()
+        print("DATABASE SUCCESS: Column resized to 255.", flush=True)
         
-        print("STEP 2: Rebuilding fresh tables with 255-character limits...", flush=True)
+        # Now create any other tables
         db.create_all()
-        
-        print("SUCCESS: Database is ready! Admin user can now be inserted safely.", flush=True)
-        
-        # ================================================================
-        # YOUR ADMIN USER CREATION CODE MUST GO BELOW THIS LINE
-        # (If you have code that creates the admin user, make sure it is here)
-        # ================================================================
+        print("SUCCESS: Tables initialized.", flush=True)
         
     except Exception as e:
-        print(f"CRITICAL DATABASE ERROR: {e}", flush=True)
+        print(f"Database note: {e}", flush=True)
 # ====================================================================
 # LOCAL DEVELOPMENT GUARD (Only runs on your local computer)
 # ====================================================================
