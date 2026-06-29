@@ -911,32 +911,25 @@ def review_shift(report_id):
         reefer_inventory=reefer_inventory,
         reefer_faults=reefer_faults
     )
-
-
 # ====================================================================
-# PRODUCTION INITIALIZATION (Runs globally on Render and Gunicorn)
+# PRODUCTION DATABASE INITIALIZATION & UPGRADE
 # ====================================================================
-# We move the table creation OUTSIDE of the __main__ block so that 
-# Gunicorn executes it when initializing your cloud instances.
+from sqlalchemy import text
+
 try:
     with app.app_context():
-        db.create_all()
-        print("SUCCESS: Database tables initialized on remote cluster.", flush=True)
-except Exception as e:
-    print(f"DATABASE INITIALIZATION ERROR: {e}", flush=True)
-# ====================================================================
-# TEMPORARY AUTO-RESET INITIALIZATION
-# ====================================================================
-try:
-    with app.app_context():
-        print("TEMPORARY: Clearing out old database table schemas...", flush=True)
-        db.drop_all()  # <-- This eliminates the need to go to Neon! It forces a clean slate.
+        print("Upgrading database schema column constraints...", flush=True)
+        # Forcefully expand the password_hash column limit to 255 characters on Neon
+        db.session.execute(text('ALTER TABLE "user" ALTER COLUMN password_hash TYPE VARCHAR(255);'))
+        db.session.commit()
+        print("SUCCESS: Live database column expanded to 255 characters.", flush=True)
         
-        print("Building fresh database tables with expanded constraints...", flush=True)
-        db.create_all()  # <-- Rebuilds your tables using your new db.String(255) update
-        print("SUCCESS: Database fully synchronized and seeded!", flush=True)
+        # Verify and create any remaining database tables
+        db.create_all()
+        print("SUCCESS: All database tables are fully synchronized.", flush=True)
 except Exception as e:
-    print(f"DATABASE INITIALIZATION ERROR: {e}", flush=True)
+    # If the column is already upgraded on subsequent deploys, this catch block handles it safely
+    print(f"Database setup info: {e}", flush=True)
 # ====================================================================
 # LOCAL DEVELOPMENT GUARD (Only runs on your local computer)
 # ====================================================================
