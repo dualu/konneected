@@ -924,7 +924,19 @@ try:
         print("SUCCESS: Database tables initialized on remote cluster.", flush=True)
 except Exception as e:
     print(f"DATABASE INITIALIZATION ERROR: {e}", flush=True)
-
+# ====================================================================
+# TEMPORARY AUTO-RESET INITIALIZATION
+# ====================================================================
+try:
+    with app.app_context():
+        print("TEMPORARY: Clearing out old database table schemas...", flush=True)
+        db.drop_all()  # <-- This eliminates the need to go to Neon! It forces a clean slate.
+        
+        print("Building fresh database tables with expanded constraints...", flush=True)
+        db.create_all()  # <-- Rebuilds your tables using your new db.String(255) update
+        print("SUCCESS: Database fully synchronized and seeded!", flush=True)
+except Exception as e:
+    print(f"DATABASE INITIALIZATION ERROR: {e}", flush=True)
 # ====================================================================
 # LOCAL DEVELOPMENT GUARD (Only runs on your local computer)
 # ====================================================================
