@@ -912,23 +912,6 @@ def review_shift(report_id):
         reefer_faults=reefer_faults
     )
 
-from sqlalchemy import text
-import os
-
-# ====================================================================
-# FINAL PRODUCTION DATABASE & PORT BINDING FIX
-# ====================================================================
-if __name__ == '__main__':
-    with app.app_context():
-        try:
-            print("Forcefully rebuilding user table with 255 character limit...", flush=True)
-            db.session.execute(text('DROP TABLE IF EXISTS "user" CASCADE;'))
-            db.session.commit()
-            db.create_all()
-            print("Database rebuilt successfully.", flush=True)
-        except Exception as e:
-            print(f"Database setup error: {e}", flush=True)
-
     # Force port binding for Render (defaulting to 10000 if not specified)
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
