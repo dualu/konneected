@@ -913,29 +913,22 @@ def review_shift(report_id):
     )
 
 from sqlalchemy import text
+import os
 
 # ====================================================================
-# FORCED SCHEMA REBUILD (THE FINAL SOLUTION)
-# ====================================================================
-with app.app_context():
-    try:
-        # 1. Brutally drop the user table to ensure no 120-limit schema remains
-        db.session.execute(text('DROP TABLE IF EXISTS "user" CASCADE;'))
-        db.session.commit()
-        
-        # 2. Recreate all tables - SQLAlchemy will now use the 255 limit from your models.py
-        db.create_all()
-        
-        # 3. Now insert the admin user
-        # (Ensure your admin creation code follows here)
-        print("SUCCESS: Database tables rebuilt with 255-character limits.", flush=True)
-        
-    except Exception as e:
-        print(f"CRITICAL ERROR DURING REBUILD: {e}", flush=True)
-# ====================================================================
-# LOCAL DEVELOPMENT GUARD (Only runs on your local computer)
+# FINAL PRODUCTION DATABASE & PORT BINDING FIX
 # ====================================================================
 if __name__ == '__main__':
-    # This block is completely ignored by Gunicorn on Render.
-    # It only triggers when you run 'python app.py' on your machine.
-    app.run(debug=True, port=5000)
+    with app.app_context():
+        try:
+            print("Forcefully rebuilding user table with 255 character limit...", flush=True)
+            db.session.execute(text('DROP TABLE IF EXISTS "user" CASCADE;'))
+            db.session.commit()
+            db.create_all()
+            print("Database rebuilt successfully.", flush=True)
+        except Exception as e:
+            print(f"Database setup error: {e}", flush=True)
+
+    # Force port binding for Render (defaulting to 10000 if not specified)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
