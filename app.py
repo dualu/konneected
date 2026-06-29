@@ -1,5 +1,5 @@
-import os
 import sys
+import os
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -911,7 +911,11 @@ def review_shift(report_id):
         reefer_inventory=reefer_inventory,
         reefer_faults=reefer_faults
     )
-
+    # Place this inside app.py where your initialization logic resides
+    with app.app_context():
+    # This ensures your tables match your models.py definitions (255 chars)
+    db.create_all()
+    print("Database schema synchronized with models.py", flush=True)
     # Force port binding for Render (defaulting to 10000 if not specified)
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
