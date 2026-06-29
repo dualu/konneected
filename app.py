@@ -912,17 +912,22 @@ def review_shift(report_id):
         reefer_faults=reefer_faults
     )
     def initialize_temp_superuser():
-    existing_user = User.query.filter_by(username='lench').first()
+    # Check if the user already exists to prevent duplicate entries
+    existing_user = User.query.filter_by(username='YOUR_CHOSEN_USERNAME').first()
+    
     if not existing_user:
+        # Replace 'YOUR_CHOSEN_PASSWORD' with your desired password
         new_admin = User(
             username='lench',
-            password_hash=generate_password_hash('Lench2026'),
+            password_hash=generate_password_hash('lench2026'),
             role='super_admin',
-            must_change_password=False
+            must_change_password=False  # Bypasses the password-change requirement
         )
         db.session.add(new_admin)
         db.session.commit()
-        print("Temporary superuser 'admin' created.", flush=True)
+        print("Temporary supervisor account created successfully.", flush=True)
+    else:
+        print("Supervisor account already exists.", flush=True)
     # Ensure there are 4 spaces before each line below 'with'
 with app.app_context():
     db.create_all()
