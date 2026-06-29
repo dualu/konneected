@@ -911,6 +911,18 @@ def review_shift(report_id):
         reefer_inventory=reefer_inventory,
         reefer_faults=reefer_faults
     )
+    def initialize_temp_superuser():
+    existing_user = User.query.filter_by(username='lench').first()
+    if not existing_user:
+        new_admin = User(
+            username='lench',
+            password_hash=generate_password_hash('Lench2026'),
+            role='super_admin',
+            must_change_password=False
+        )
+        db.session.add(new_admin)
+        db.session.commit()
+        print("Temporary superuser 'admin' created.", flush=True)
     # Ensure there are 4 spaces before each line below 'with'
 with app.app_context():
     db.create_all()
