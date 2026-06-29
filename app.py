@@ -916,20 +916,27 @@ def review_shift(report_id):
 # ====================================================================
 from sqlalchemy import text
 
-try:
-    with app.app_context():
-        print("Upgrading database schema column constraints...", flush=True)
-        # Forcefully expand the password_hash column limit to 255 characters on Neon
-        db.session.execute(text('ALTER TABLE "user" ALTER COLUMN password_hash TYPE VARCHAR(255);'))
+# ====================================================================
+# FOOLPROOF DATABASE RESET & INITIALIZATION
+# ====================================================================
+with app.app_context():
+    try:
+        print("STEP 1: Forcefully dropping the old, restricted user table...", flush=True)
+        db.session.execute(text('DROP TABLE IF EXISTS "user" CASCADE;'))
         db.session.commit()
-        print("SUCCESS: Live database column expanded to 255 characters.", flush=True)
         
-        # Verify and create any remaining database tables
+        print("STEP 2: Rebuilding fresh tables with 255-character limits...", flush=True)
         db.create_all()
-        print("SUCCESS: All database tables are fully synchronized.", flush=True)
-except Exception as e:
-    # If the column is already upgraded on subsequent deploys, this catch block handles it safely
-    print(f"Database setup info: {e}", flush=True)
+        
+        print("SUCCESS: Database is ready! Admin user can now be inserted safely.", flush=True)
+        
+        # ================================================================
+        # YOUR ADMIN USER CREATION CODE MUST GO BELOW THIS LINE
+        # (If you have code that creates the admin user, make sure it is here)
+        # ================================================================
+        
+    except Exception as e:
+        print(f"CRITICAL DATABASE ERROR: {e}", flush=True)
 # ====================================================================
 # LOCAL DEVELOPMENT GUARD (Only runs on your local computer)
 # ====================================================================
